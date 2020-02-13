@@ -12,6 +12,10 @@ from pymongo import MongoClient
 
 class Ncp(object):
     def __init__(self):
+        self.client = MongoClient('localhost', port=27017)
+        self.db = self.client.NCP
+        self.collection_list = self.db.list_collection_names(
+            session=None)  # 获取数据库中集合名称列表
         self.key = '47f1c118fa39425ab3f55e4339399e54'
         self.now_date = datetime.datetime.now().strftime('%Y-%m-%d')
         self.url = 'https://view.inews.qq.com/g2/getOnsInfo?name=disease_h5'
@@ -32,20 +36,39 @@ class Ncp(object):
         pos_lon_lat = [float(pos[0]), float(pos[1])]
         return pos_lon_lat
 
-    def save_data(self):
-        client = MongoClient('localhost', port=27017)
-        db = client.NCP
-        collection_list = db.list_collection_names(session=None)        # 获取数据库中集合名称列表
-        if self.now_date in collection_list:        # 判断库中是否已存在当天数据
-            collection = db[self.now_date]
-            print('数据库中已有今天的数据{}条，请不要重复收集......'.format(collection.count_documents({})))
-            return collection
-        else:
-            collection = db[self.now_date]
-
+    def get_data_all(self):
         req = requests.get(url=self.url, headers=self.headers)
         data_all = json.loads(req.text)
-        data_china = json.loads(data_all['data'])['areaTree'][0]     # 定位到中国数据
+        return data_all
+
+    def save_daylist(self):
+        collection = self.db.ChinaDayList
+        day_list = json.loads(self.get_data_all()['data'])['chinaDayList']
+        for item in day_list:
+            day_item = {
+                'confirm': item['confirm'],
+                'suspect': item['suspect'],
+                'dead': item['dead'],
+                'heal': item['heal'],
+                'deadrate': item['deadRate'],
+                'healrate': item['healRate'],
+                'date': item['date']
+            }
+            collection.insert_one(day_item)
+
+    def save_data(self):
+        if self.now_date in self.collection_list:        # 判断库中是否已存在当天数据
+            collection = self.db[self.now_date]
+            print(
+                '数据库中已有今天的数据{}条，请不要重复收集......'.format(
+                    collection.count_documents(
+                        {})))
+            return collection
+        else:
+            collection = self.db[self.now_date]
+
+        data_china = json.loads(self.get_data_all()['data'])[
+            'areaTree'][0]     # 定位到中国数据
         country = data_china['name']      # 国家名称
         for prov_n in trange(len(data_china['children'])):       # 调用tqdm库显示进度
             data_province = data_china['children'][prov_n]      # 定位到省级数据
@@ -74,13 +97,17 @@ class Ncp(object):
                     'pos_lat': pos_lon_lat[1]
                 }
                 collection.insert_one(item)
-        print('\n今天的数据已收集完毕，共采集了{}个城市和地区的数据......'.format(collection.count_documents({})))
+        print(
+            '\n今天的数据已收集完毕，共采集了{}个城市和地区的数据......'.format(
+                collection.count_documents(
+                    {})))
         return
 
 
 def main():
     ncp = Ncp()
     ncp.save_data()
+    ncp.save_daylist()
 
 
 if __name__ == '__main__':
