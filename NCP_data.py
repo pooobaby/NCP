@@ -3,9 +3,11 @@
 
 # Copyright By Eric in 2020
 
+import os
 import json
 import datetime
 import requests
+import pandas as pd
 from tqdm.std import trange
 from pymongo import MongoClient
 
@@ -16,7 +18,7 @@ class Ncp(object):
         self.db = self.client.NCP
         self.collection_list = self.db.list_collection_names(
             session=None)  # 获取数据库中集合名称列表
-        self.key = '47f1c118fa39425ab3f55e4339399e54'
+        self.key = '这里需要替换成高德地图API应用的Key'
         self.now_date = datetime.datetime.now().strftime('%Y-%m-%d')
         self.url = 'https://view.inews.qq.com/g2/getOnsInfo?name=disease_h5'
         self.headers = {
@@ -42,7 +44,10 @@ class Ncp(object):
         return data_all
 
     def save_daylist(self):
+        count = 0
         collection = self.db.ChinaDayList
+        day_list_collection = pd.DataFrame(collection.find({}, {'_id': 0, 'date': 1}))
+        day_list_date = day_list_collection['date'].values.tolist()
         day_list = json.loads(self.get_data_all()['data'])['chinaDayList']
         for item in day_list:
             day_item = {
@@ -54,13 +59,21 @@ class Ncp(object):
                 'healrate': item['healRate'],
                 'date': item['date']
             }
-            collection.insert_one(day_item)
+            if day_item['date'] in day_list_date:
+                continue
+            else:
+                collection.insert_one(day_item)
+                count = count + 1
+        if count == 0:
+            print('日数据库中的数据没有更新......')
+        else:
+            print('每日统计库中新增了数据{}条......'.format(count))
 
     def save_data(self):
         if self.now_date in self.collection_list:        # 判断库中是否已存在当天数据
             collection = self.db[self.now_date]
             print(
-                '数据库中已有今天的数据{}条，请不要重复收集......'.format(
+                '地区库中已有今天的数据{}条，请不要重复收集......'.format(
                     collection.count_documents(
                         {})))
             return collection

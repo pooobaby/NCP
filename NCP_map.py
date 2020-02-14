@@ -53,8 +53,17 @@ class CleanData(object):
         confirm = data_all['confirm'].tolist()
         dead = data_all['dead'].tolist()
         heal = data_all['heal'].tolist()
-        daylist = [date, confirm, dead, heal]
-        return daylist
+        daylist = [date, confirm, dead, heal, '全国确诊、康复、死亡人数趋势图']
+
+        rate_date, rate_confirm, rate_dead, rate_heal = [], [], [], []
+        for n in range(3, len(date)):
+            rate_date.append(date[n])
+            rate_confirm.append(round((confirm[n]-confirm[n-1])/confirm[n-1], 2))   # 保留两位小数
+            rate_dead.append(round((dead[n]-dead[n-1])/dead[n-1], 2))
+            rate_heal.append(round((heal[n]-heal[n-1])/heal[n-1], 2))
+        growthrate = [rate_date, rate_confirm, rate_dead, rate_heal, '全国确诊、康复、死亡增长率趋势图']
+        changedays =[daylist, growthrate]
+        return changedays
 
 
 class DrawMap(object):
@@ -178,7 +187,8 @@ def main():
     confirm = cleandata.change_data()
     daylist = cleandata.change_days()
 
-    page.add(ncp_map.line_days(daylist))
+    page.add(ncp_map.line_days(daylist[0]))
+    page.add(ncp_map.line_days(daylist[1]))
     page.add(ncp_map.geo_china(confirm[0], confirm[2]))
     page.add(ncp_map.geo_china_piecewise(confirm[0], confirm[2]))
     page.add(ncp_map.heat_china(confirm[0], confirm[2]))
