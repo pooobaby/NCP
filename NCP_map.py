@@ -62,7 +62,7 @@ class CleanData(object):
             rate_dead.append(round((dead[n]-dead[n-1])/dead[n-1], 2))
             rate_heal.append(round((heal[n]-heal[n-1])/heal[n-1], 2))
         growthrate = [rate_date, rate_confirm, rate_dead, rate_heal, '全国确诊、康复、死亡增长率趋势图']
-        changedays =[daylist, growthrate]
+        changedays = [daylist, growthrate]
         return changedays
 
 
@@ -156,7 +156,7 @@ class DrawMap(object):
             .add_yaxis('康复', data[3], is_smooth=True, symbol='circle', symbol_size=6)
             .set_global_opts
             (
-                title_opts=opts.TitleOpts(title='全国确诊、康复、死亡人数趋势图',
+                title_opts=opts.TitleOpts(title=data[4],
                                           subtitle='截止{}，共有{}天的数据'
                                           .format(self.now_date, len(data[0]))),
             )
