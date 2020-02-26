@@ -62,7 +62,16 @@ class CleanData(object):
             rate_dead.append(round((dead[n]-dead[n-1])/dead[n-1], 2))
             rate_heal.append(round((heal[n]-heal[n-1])/heal[n-1], 2))
         growthrate = [rate_date, rate_confirm, rate_dead, rate_heal, '全国确诊、康复、死亡增长率趋势图']
-        changedays = [daylist, growthrate]
+
+        increase_date, increase_confirm, increase_dead, increase_heal = [], [], [], []
+        for n in range(3, len(date)):
+            increase_date.append(date[n])
+            increase_confirm.append(round(confirm[n]-confirm[n-1]))   # 保留两位小数
+            increase_dead.append(round(dead[n]-dead[n-1]))
+            increase_heal.append(round(heal[n]-heal[n-1]))
+        growth_increase = [increase_date, increase_confirm, increase_dead, increase_heal, '全国确诊、康复、死亡新增趋势图']
+
+        changedays = [daylist, growthrate, growth_increase]
         return changedays
 
 
@@ -189,6 +198,7 @@ def main():
 
     page.add(ncp_map.line_days(daylist[0]))
     page.add(ncp_map.line_days(daylist[1]))
+    page.add(ncp_map.line_days(daylist[2]))
     page.add(ncp_map.geo_china(confirm[0], confirm[2]))
     page.add(ncp_map.geo_china_piecewise(confirm[0], confirm[2]))
     page.add(ncp_map.heat_china(confirm[0], confirm[2]))

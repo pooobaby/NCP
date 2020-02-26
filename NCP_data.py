@@ -3,7 +3,6 @@
 
 # Copyright By Eric in 2020
 
-import os
 import json
 import datetime
 import requests
@@ -18,7 +17,7 @@ class Ncp(object):
         self.db = self.client.NCP
         self.collection_list = self.db.list_collection_names(
             session=None)  # 获取数据库中集合名称列表
-        self.key = '高德地图应用API的KEY'
+        self.key = '高德地图API的key'
         self.now_date = datetime.datetime.now().strftime('%Y-%m-%d')
         self.url = 'https://view.inews.qq.com/g2/getOnsInfo?name=disease_h5'
         self.headers = {
